@@ -5,11 +5,12 @@ from pydantic import BaseModel
 
 app = FastAPI()
 
+list_of_posts = [{"title":"title1","content":"content1","id":1},{"title":"title2","content":"content2","id":2}]
+
 class Post(BaseModel):
     title:str
     content:str
-    published:bool = True
-    author: Optional[str]=None
+    id:int
 
 #fastapi works on the first match principle, meaning if a bunch of api has the same path, it'll pick the one that matched first
 @app.get("/posts/helloWorld")
@@ -22,7 +23,7 @@ def read_item(item_id: int, q: Union[str, None] = None):
 
 @app.get("/posts")
 def firstapi():
-    return {"message":"Comfy learning"}
+    return {"message":list_of_posts}
 
 @app.post("/posts/postId/{postId}")
 def firstPost(postId:int,q:Union[int,None]=None):
@@ -37,11 +38,12 @@ def postBody(payload:dict = Body(...)):
 @app.post("/posts")
 def postBody(payload:Post):
     print(payload)
-    return{"title":payload.title    ,
-            "content":payload.content,
-            "published":payload.published,
-            "author":payload.author,
-           "welcome":"to the top",
-           "payload as an  pydantic object":payload,
-           "payload as dictionary":payload.model_dump()
-           }
+    payload_dict=payload.model_dump()
+    if not any(post["id"]==payload_dict["id"]  for post in list_of_posts):
+        list_of_posts.append(payload_dict)
+    else:
+        return {
+                "message":"cannot add post, Post id already exists",
+                "list of posts": list_of_posts
+                }
+    return list_of_posts
