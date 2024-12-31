@@ -2,6 +2,7 @@ from typing import Optional, Union
 from fastapi import  FastAPI
 from fastapi.params import Body
 from pydantic import BaseModel
+from random import randrange
 
 app = FastAPI()
 
@@ -10,7 +11,7 @@ list_of_posts = [{"title":"title1","content":"content1","id":1},{"title":"title2
 class Post(BaseModel):
     title:str
     content:str
-    id:int
+    id:Optional[int]=None
 
 #fastapi works on the first match principle, meaning if a bunch of api has the same path, it'll pick the one that matched first
 @app.get("/posts/helloWorld")
@@ -39,6 +40,7 @@ def postBody(payload:dict = Body(...)):
 def postBody(payload:Post):
     print(payload)
     payload_dict=payload.model_dump()
+    payload_dict["id"] = randrange(0,10000000)
     if not any(post["id"]==payload_dict["id"]  for post in list_of_posts):
         list_of_posts.append(payload_dict)
     else:
@@ -47,3 +49,12 @@ def postBody(payload:Post):
                 "list of posts": list_of_posts
                 }
     return list_of_posts
+
+@app.get("/posts/{id}")
+def getPostById(id:int):
+    matchingPost = next((post for post in list_of_posts if post["id"] == id),None)
+    if matchingPost:
+        return matchingPost
+    else:
+        return {"message":"No post found for the given id"}
+    
