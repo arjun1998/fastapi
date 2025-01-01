@@ -36,18 +36,17 @@ def postBody(payload:dict = Body(...)):
     return{"payload":payload
            ,"welcome":"to the top"}
 
-@app.post("/posts")
+@app.post("/posts",status_code=status.HTTP_201_CREATED)
 def postBody(payload:Post):
     print(payload)
     payload_dict=payload.model_dump()
-    payload_dict["id"] = randrange(0,10000000)
+    
+    if not payload_dict["id"]:
+        payload_dict["id"] = randrange(0,10000000)
     if not any(post["id"]==payload_dict["id"]  for post in list_of_posts):
         list_of_posts.append(payload_dict)
     else:
-        return {
-                "message":"cannot add post, Post id already exists",
-                "list of posts": list_of_posts
-                }
+        raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED,detail="id already exists")
     return list_of_posts
 
 def findPostById(id):
