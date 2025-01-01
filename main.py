@@ -1,5 +1,5 @@
 from typing import Optional, Union
-from fastapi import  FastAPI
+from fastapi import  FastAPI,Response
 from fastapi.params import Body
 from pydantic import BaseModel
 from random import randrange
@@ -50,11 +50,19 @@ def postBody(payload:Post):
                 }
     return list_of_posts
 
-@app.get("/posts/{id}")
-def getPostById(id:int):
-    matchingPost = next((post for post in list_of_posts if post["id"] == id),None)
-    if matchingPost:
-        return matchingPost
+def findPostById(id):
+    post=next((post for post in list_of_posts if post["id"]==id),None)
+    if post:
+        return post
     else:
-        return {"message":"No post found for the given id"}
+        return None
+
+@app.get("/posts/{id}")
+def getPostById(id:int,response:Response):
+    post= findPostById(id)
+    if post:
+        return post
+    else:
+        response.status_code=404
+        return {"message":"No post found for the given ID"}
     
