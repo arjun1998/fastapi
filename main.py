@@ -79,3 +79,12 @@ def deletePostById(id:int):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="id not found")
     list_of_posts.pop(index)
     return list_of_posts
+
+@app.put("/posts/{id}",status_code=status.HTTP_201_CREATED)
+def updatePostById(id:int,post:Post):
+    index = findIndexById(id)
+    if index == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="id not found")
+    post_dict = post.model_dump()
+    list_of_posts[index]=post_dict
+    return list_of_posts
