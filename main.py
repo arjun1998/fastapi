@@ -50,7 +50,6 @@ def postBody(payload:dict = Body(...)):
 
 @app.post("/posts",status_code=status.HTTP_201_CREATED)
 def postBody(payload:Post):
-    print(payload)
     payload_dict=payload.model_dump()
     
     if not payload_dict["id"]:
@@ -86,5 +85,6 @@ def updatePostById(id:int,post:Post):
     if index == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="id not found")
     post_dict = post.model_dump()
+    post_dict["id"]=id
     list_of_posts[index]=post_dict
     return list_of_posts
