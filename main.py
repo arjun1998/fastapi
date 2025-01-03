@@ -21,9 +21,8 @@ def findPostById(id):
         return None
 def findIndexById(id):
     for index,post in enumerate(list_of_posts):
-        if post["id"]==int(id):
+        if post["id"]==id:
             return index
-    return {"message":"Index not found"}
 
 
 #fastapi works on the first match principle, meaning if a bunch of api has the same path, it'll pick the one that matched first
@@ -74,11 +73,9 @@ def getPostById(id:int):
     
 
 @app.delete("/posts/{id}",status_code=status.HTTP_202_ACCEPTED)
-def deletePostById(id):
+def deletePostById(id:int):
     index = findIndexById(id)
-    if type(index)!=dict:
-        list_of_posts.pop(index)
-        return list_of_posts
-    else:
+    if index == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="id not found")
-        
+    list_of_posts.pop(index)
+    return list_of_posts
