@@ -87,4 +87,5 @@ def updatePostById(id:int,post:Post):
     post_dict = post.model_dump()
     post_dict["id"]=id
     list_of_posts[index]=post_dict
+    print(list_of_posts)
     return list_of_posts
