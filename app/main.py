@@ -3,6 +3,37 @@ from fastapi import  FastAPI,Response,status,HTTPException
 from fastapi.params import Body
 from pydantic import BaseModel
 from random import randrange
+import psycopg2
+import os
+from dotenv import load_dotenv
+from psycopg2.extras import RealDictCursor
+
+
+
+load_dotenv()
+host = os.getenv("DB_HOST")
+database = os.getenv("DB_NAME")
+user = os.getenv("DB_USER")
+password = os.getenv("DB_PASSWORD")
+#DB connection setup
+try:  
+    conn = psycopg2.connect(
+    host=host,
+    database=database,
+    user=user,
+    password=password,
+    cursor_factory=RealDictCursor
+)
+    cur = conn.cursor()
+    print("Connected to the database!")
+except Exception as error:
+    print("Connection failed, Error",error)
+
+cur.execute("INSERT INTO public.posts (title, content) VALUES ('python Post', 'This is the content of the python post.') ")
+conn.commit()
+cur.close()
+conn.close()
+
 
 app = FastAPI()
 
@@ -11,7 +42,8 @@ list_of_posts = [{"title":"title1","content":"content1","id":1},{"title":"title2
 class Post(BaseModel):
     title:str
     content:str
-    id:Optional[int]=None
+    published:Optional[bool]=False
+    id:int
 
 def findPostById(id):
     post=next((post for post in list_of_posts if post["id"]==id),None)
