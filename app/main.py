@@ -7,6 +7,7 @@ import psycopg2
 import os
 from dotenv import load_dotenv
 from psycopg2.extras import RealDictCursor
+import time
 
 
 
@@ -16,23 +17,24 @@ database = os.getenv("DB_NAME")
 user = os.getenv("DB_USER")
 password = os.getenv("DB_PASSWORD")
 #DB connection setup
-try:  
-    conn = psycopg2.connect(
-    host=host,
-    database=database,
-    user=user,
-    password=password,
-    cursor_factory=RealDictCursor
-)
-    cur = conn.cursor()
-    print("Connected to the database!")
-except Exception as error:
-    print("Connection failed, Error",error)
+while True:
+    try:  
+        conn = psycopg2.connect(
+        host=host,
+        database=database,
+        user=user,
+        password=password,
+        cursor_factory=RealDictCursor
+    )
+        cur = conn.cursor()
+        print("Connected to the database!")
+        break
+    except Exception as error:
+        print("Connection failed, Error",error)
+        time.sleep(2)
 
-cur.execute("INSERT INTO public.posts (title, content) VALUES ('python Post', 'This is the content of the python post.') ")
-conn.commit()
-cur.close()
-conn.close()
+
+
 
 
 app = FastAPI()
@@ -43,7 +45,7 @@ class Post(BaseModel):
     title:str
     content:str
     published:Optional[bool]=False
-    id:int
+    id:Optional[int]=None
 
 def findPostById(id):
     post=next((post for post in list_of_posts if post["id"]==id),None)
@@ -68,7 +70,10 @@ def read_item(item_id: int, q: Union[str, None] = None):
 
 @app.get("/posts")
 def firstapi():
-    return {"message":list_of_posts}
+    cur.execute(""" Select * from posts  """)
+    posts=cur.fetchall()
+    conn.commit()
+    return {"posts":posts}
 
 @app.post("/posts/postId/{postId}")
 def firstPost(postId:int,q:Union[int,None]=None):
@@ -82,15 +87,10 @@ def postBody(payload:dict = Body(...)):
 
 @app.post("/posts",status_code=status.HTTP_201_CREATED)
 def postBody(payload:Post):
-    payload_dict=payload.model_dump()
-    
-    if not payload_dict["id"]:
-        payload_dict["id"] = randrange(0,10000000)
-    if not any(post["id"]==payload_dict["id"]  for post in list_of_posts):
-        list_of_posts.append(payload_dict)
-    else:
-        raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED,detail="id already exists")
-    return list_of_posts
+    cur.execute("""Insert into posts (title,content,published) values (%s,%s,%s) RETURNING *""",(payload.title,payload.content,payload.published))
+    new_post = cur.fetchone()
+    conn.commit()
+    return {"post":new_post}
 
 
 
@@ -121,3 +121,8 @@ def updatePostById(id:int,post:Post):
     list_of_posts[index]=post_dict
     print(list_of_posts)
     return list_of_posts
+
+
+# conn.commit()
+# cur.close()
+# conn.close()
