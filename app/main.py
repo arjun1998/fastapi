@@ -41,6 +41,7 @@ app = FastAPI()
 
 list_of_posts = [{"title":"title1","content":"content1","id":1},{"title":"title2","content":"content2","id":2}]
 
+
 class Post(BaseModel):
     title:str
     content:str
@@ -65,8 +66,10 @@ def read_root():
     return {"Hello": "World"}
 
 @app.get("/posts/items/{item_id}")
-def read_item(item_id: int, q: Union[str, None] = None):
-    return {"item_id": item_id, "q": q}
+def read_item(item_id: int):
+    cur.execute(""" Select * from posts where id = %s  """,item_id)
+    posts=cur.fetchall()
+    return {"post": posts}
 
 @app.get("/posts")
 def firstapi():
@@ -89,38 +92,42 @@ def postBody(payload:dict = Body(...)):
 def postBody(payload:Post):
     cur.execute("""Insert into posts (title,content,published) values (%s,%s,%s) RETURNING *""",(payload.title,payload.content,payload.published))
     new_post = cur.fetchone()
-    conn.commit()
     return {"post":new_post}
 
 
 
 @app.get("/posts/{id}")
 def getPostById(id:int):
-    post= findPostById(id)
-    if post:
-        return post
-    else:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="No post found for the given ID")
+    cur.execute(""" Select * from posts where id = %s  """,(id,))
+    posts=cur.fetchone()
+    conn.commit()
+    if not posts:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f"post with id of {id} not found")
+    return {"post": posts}
     
 
 @app.delete("/posts/{id}",status_code=status.HTTP_202_ACCEPTED)
 def deletePostById(id:int):
-    index = findIndexById(id)
-    if index == None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="id not found")
-    list_of_posts.pop(index)
-    return list_of_posts
+    cur.execute("""  Delete from posts where id = %s returning * """,(id,))
+    posts=cur.fetchone()
+    conn.commit()
+    if not posts:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f"post with id of {id} not found")
+    return {"message":"The following posts have been deleted",
+            "posts":posts}
+
+
 
 @app.put("/posts/{id}",status_code=status.HTTP_201_CREATED)
 def updatePostById(id:int,post:Post):
-    index = findIndexById(id)
-    if index == None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="id not found")
-    post_dict = post.model_dump()
-    post_dict["id"]=id
-    list_of_posts[index]=post_dict
-    print(list_of_posts)
-    return list_of_posts
+    cur.execute("""  UPDATE posts set title = %s,content=%s,published=%s where id = %s returning * """,(post.title,post.content,post.published,id,))
+    posts=cur.fetchone()
+    conn.commit()
+    if not posts:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f"post with id of {id} not found")
+   
+    return  {"message":"The following posts have been updated",
+            "posts":posts}
 
 
 # conn.commit()
