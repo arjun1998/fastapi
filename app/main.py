@@ -1,5 +1,5 @@
 from typing import Optional, Union
-from fastapi import  FastAPI,Response,status,HTTPException
+from fastapi import  FastAPI,Response,status,HTTPException,Depends
 from fastapi.params import Body
 from pydantic import BaseModel
 from random import randrange
@@ -10,6 +10,10 @@ from psycopg2.extras import RealDictCursor
 import time
 
 
+from . import models
+from .database import engine,SessionLocal
+from sqlalchemy.orm import Session
+
 
 load_dotenv()
 host = os.getenv("DB_HOST")
@@ -17,27 +21,48 @@ database = os.getenv("DB_NAME")
 user = os.getenv("DB_USER")
 password = os.getenv("DB_PASSWORD")
 #DB connection setup
-while True:
-    try:  
-        conn = psycopg2.connect(
-        host=host,
-        database=database,
-        user=user,
-        password=password,
-        cursor_factory=RealDictCursor
-    )
-        cur = conn.cursor()
-        print("Connected to the database!")
-        break
-    except Exception as error:
-        print("Connection failed, Error",error)
-        time.sleep(2)
+count=5
+# while count:
+#     try:  
+#         conn = psycopg2.connect(
+#         host=host,
+#         database=database,
+#         user=user,
+#         password=password,
+#         cursor_factory=RealDictCursor
+#     )
+#         cur = conn.cursor()
+#         print("Connected to the database!")
+#         break
+#     except Exception as error:
+#         print("Connection failed, Error",error)
+#         time.sleep(2)
+#         count-=1
 
 
 
 
 
 app = FastAPI()
+
+models.Base.metadata.create_all(bind=engine)
+
+
+
+
+# Dependency to get DB session
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+#ORM method to connect to the db using sql alchemy
+@app.get("/sqlAlchemy")
+def sqlAlchemyGet(db: Session = Depends(get_db)):
+    return{"message":"table created i guess"}
+
 
 list_of_posts = [{"title":"title1","content":"content1","id":1},{"title":"title2","content":"content2","id":2}]
 
@@ -128,6 +153,9 @@ def updatePostById(id:int,post:Post):
    
     return  {"message":"The following posts have been updated",
             "posts":posts}
+
+
+
 
 
 # conn.commit()
