@@ -11,9 +11,9 @@ import time
 
 
 from . import models
-from .database import engine,SessionLocal
+from .database import engine,SessionLocal, get_db
 from sqlalchemy.orm import Session
-
+from . import models
 
 load_dotenv()
 host = os.getenv("DB_HOST")
@@ -50,18 +50,12 @@ models.Base.metadata.create_all(bind=engine)
 
 
 
-# Dependency to get DB session
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 #ORM method to connect to the db using sql alchemy
 @app.get("/sqlAlchemy")
 def sqlAlchemyGet(db: Session = Depends(get_db)):
-    return{"message":"table created i guess"}
+    posts=db.query(models.Post).all()
+    return{"message":posts}
 
 
 list_of_posts = [{"title":"title1","content":"content1","id":1},{"title":"title2","content":"content2","id":2}]
