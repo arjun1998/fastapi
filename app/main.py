@@ -51,11 +51,7 @@ models.Base.metadata.create_all(bind=engine)
 
 
 
-#ORM method to connect to the db using sql alchemy
-@app.get("/sqlAlchemy")
-def sqlAlchemyGet(db: Session = Depends(get_db)):
-    posts=db.query(models.Post).all()
-    return{"message":posts}
+
 
 
 list_of_posts = [{"title":"title1","content":"content1","id":1},{"title":"title2","content":"content2","id":2}]
@@ -90,12 +86,6 @@ def read_item(item_id: int):
     posts=cur.fetchall()
     return {"post": posts}
 
-@app.get("/posts")
-def firstapi():
-    cur.execute(""" Select * from posts  """)
-    posts=cur.fetchall()
-    conn.commit()
-    return {"posts":posts}
 
 @app.post("/posts/postId/{postId}")
 def firstPost(postId:int,q:Union[int,None]=None):
@@ -107,11 +97,31 @@ def postBody(payload:dict = Body(...)):
     return{"payload":payload
            ,"welcome":"to the top"}
 
+#ORM method to connect to the db using sql alchemy
+@app.get("/sqlAlchemy")
+def sqlAlchemyGet(db: Session = Depends(get_db)):
+    posts=db.query(models.Post).all()
+    return{"message":posts}
+
+
+@app.get("/posts")
+def firstapi(db: Session = Depends(get_db)):
+    # cur.execute(""" Select * from posts  """)
+    # posts=cur.fetchall()
+    # conn.commit()
+    posts=db.query(models.Post).all()
+    return {"posts":posts}
+
+
 @app.post("/posts",status_code=status.HTTP_201_CREATED)
-def postBody(payload:Post):
-    cur.execute("""Insert into posts (title,content,published) values (%s,%s,%s) RETURNING *""",(payload.title,payload.content,payload.published))
-    new_post = cur.fetchone()
-    return {"post":new_post}
+def postBody(payload:Post,db: Session = Depends(get_db)):
+    # cur.execute("""Insert into posts (title,content,published) values (%s,%s,%s) RETURNING *""",(payload.title,payload.content,payload.published))
+    # new_post = cur.fetchone()
+    new_Post = models.Post(title=payload.title,content=payload.content,published=payload.published)
+    db.add(new_Post)
+    db.commit()
+    db.refresh(new_Post)
+    return {"post":new_Post}
 
 
 
