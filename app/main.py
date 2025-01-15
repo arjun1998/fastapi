@@ -13,7 +13,6 @@ import time
 from . import models
 from .database import engine,SessionLocal, get_db
 from sqlalchemy.orm import Session
-from . import models
 
 load_dotenv()
 host = os.getenv("DB_HOST")
@@ -22,22 +21,22 @@ user = os.getenv("DB_USER")
 password = os.getenv("DB_PASSWORD")
 #DB connection setup
 count=5
-# while count:
-#     try:  
-#         conn = psycopg2.connect(
-#         host=host,
-#         database=database,
-#         user=user,
-#         password=password,
-#         cursor_factory=RealDictCursor
-#     )
-#         cur = conn.cursor()
-#         print("Connected to the database!")
-#         break
-#     except Exception as error:
-#         print("Connection failed, Error",error)
-#         time.sleep(2)
-#         count-=1
+while count:
+    try:  
+        conn = psycopg2.connect(
+        host=host,
+        database=database,
+        user=user,
+        password=password,
+        cursor_factory=RealDictCursor
+    )
+        cur = conn.cursor()
+        print("Connected to the database!")
+        break
+    except Exception as error:
+        print("Connection failed, Error",error)
+        time.sleep(2)
+        count-=1
 
 
 
@@ -61,7 +60,7 @@ class Post(BaseModel):
     title:str
     content:str
     published:Optional[bool]=False
-    id:Optional[int]=None
+    #id:Optional[int]=None
 
 def findPostById(id):
     post=next((post for post in list_of_posts if post["id"]==id),None)
@@ -117,7 +116,8 @@ def firstapi(db: Session = Depends(get_db)):
 def postBody(payload:Post,db: Session = Depends(get_db)):
     # cur.execute("""Insert into posts (title,content,published) values (%s,%s,%s) RETURNING *""",(payload.title,payload.content,payload.published))
     # new_post = cur.fetchone()
-    new_Post = models.Post(title=payload.title,content=payload.content,published=payload.published)
+    #print(**payload.model_dump())
+    new_Post = models.Post(**payload.model_dump())
     db.add(new_Post)
     db.commit()
     db.refresh(new_Post)
@@ -126,37 +126,44 @@ def postBody(payload:Post,db: Session = Depends(get_db)):
 
 
 @app.get("/posts/{id}")
-def getPostById(id:int):
-    cur.execute(""" Select * from posts where id = %s  """,(id,))
-    posts=cur.fetchone()
-    conn.commit()
+def getPostById(id:int,db: Session = Depends(get_db)):
+    # cur.execute(""" Select * from posts where id = %s  """,(id,))
+    # posts=cur.fetchone()
+    # conn.commit()
+    posts = db.query(models.Post).filter(models.Post.id == id).first()
     if not posts:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f"post with id of {id} not found")
     return {"post": posts}
     
 
 @app.delete("/posts/{id}",status_code=status.HTTP_202_ACCEPTED)
-def deletePostById(id:int):
-    cur.execute("""  Delete from posts where id = %s returning * """,(id,))
-    posts=cur.fetchone()
-    conn.commit()
-    if not posts:
+def deletePostById(id:int,db: Session = Depends(get_db)):
+    # cur.execute("""  Delete from posts where id = %s returning * """,(id,))
+    # posts=cur.fetchone()
+    # conn.commit()
+    posts = db.query(models.Post).filter(models.Post.id == id)
+    if not posts.first():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f"post with id of {id} not found")
+    
+    posts.delete(synchronize_session=False)
+    db.commit()
     return {"message":"The following posts have been deleted",
             "posts":posts}
 
 
 
 @app.put("/posts/{id}",status_code=status.HTTP_201_CREATED)
-def updatePostById(id:int,post:Post):
-    cur.execute("""  UPDATE posts set title = %s,content=%s,published=%s where id = %s returning * """,(post.title,post.content,post.published,id,))
-    posts=cur.fetchone()
-    conn.commit()
+def updatePostById(id:int,post:Post,db: Session = Depends(get_db)):
+    
+    post_query = db.query(models.Post).filter(models.Post.id == id)
+    posts = post_query.first()
+    post.id=id
     if not posts:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f"post with id of {id} not found")
-   
+    post_query.update(post.model_dump(),synchronize_session=False)
+    db.commit()
     return  {"message":"The following posts have been updated",
-            "posts":posts}
+            "posts":post_query.first()}
 
 
 
