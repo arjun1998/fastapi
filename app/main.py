@@ -11,6 +11,7 @@ import time
 
 
 from . import models
+from .schemas import Post as Post
 from .database import engine,SessionLocal, get_db
 from sqlalchemy.orm import Session
 
@@ -48,19 +49,10 @@ models.Base.metadata.create_all(bind=engine)
 
 
 
-
-
-
-
-
 list_of_posts = [{"title":"title1","content":"content1","id":1},{"title":"title2","content":"content2","id":2}]
 
 
-class Post(BaseModel):
-    title:str
-    content:str
-    published:Optional[bool]=False
-    #id:Optional[int]=None
+
 
 def findPostById(id):
     post=next((post for post in list_of_posts if post["id"]==id),None)
@@ -142,13 +134,13 @@ def deletePostById(id:int,db: Session = Depends(get_db)):
     # posts=cur.fetchone()
     # conn.commit()
     posts = db.query(models.Post).filter(models.Post.id == id)
-    if not posts.first():
+    post=posts.first()
+    if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f"post with id of {id} not found")
     
     posts.delete(synchronize_session=False)
     db.commit()
-    return {"message":"The following posts have been deleted",
-            "posts":posts}
+    return {"message":f"The Post with the id of {id} has been deleted"}
 
 
 
@@ -157,7 +149,7 @@ def updatePostById(id:int,post:Post,db: Session = Depends(get_db)):
     
     post_query = db.query(models.Post).filter(models.Post.id == id)
     posts = post_query.first()
-    post.id=id
+    #post.id=id
     if not posts:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f"post with id of {id} not found")
     post_query.update(post.model_dump(),synchronize_session=False)
