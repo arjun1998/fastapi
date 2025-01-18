@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional, Union,List
 from fastapi import  FastAPI,Response,status,HTTPException,Depends
 from fastapi.params import Body
 from pydantic import BaseModel
@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from psycopg2.extras import RealDictCursor
 import time
 from . import models
-from .schemas import Post as Post
+from .schemas import Post,createUser
 from . import schemas
 from .database import engine,SessionLocal, get_db
 from sqlalchemy.orm import Session
@@ -23,7 +23,7 @@ models.Base.metadata.create_all(bind=engine)
 
 
 
-@app.get("/posts",response_model=schemas.ResponseBody)
+@app.get("/posts",response_model=List[schemas.ResponseBody])
 def firstapi(db: Session = Depends(get_db)):
     posts=db.query(models.Post).all()
     return posts
@@ -60,7 +60,7 @@ def deletePostById(id:int,db: Session = Depends(get_db)):
 
 
 
-@app.put("/posts/{id}",status_code=status.HTTP_201_CREATED)
+@app.put("/posts/{id}",status_code=status.HTTP_201_CREATED,response_model=schemas.ResponseBody)
 def updatePostById(id:int,post:Post,db: Session = Depends(get_db)):
     
     post_query = db.query(models.Post).filter(models.Post.id == id)
@@ -73,4 +73,22 @@ def updatePostById(id:int,post:Post,db: Session = Depends(get_db)):
             "posts":post_query.first()}
 
 
+@app.post("/users",status_code=status.HTTP_201_CREATED,response_model=schemas.createUserResponseBody)
+def createUsers(user:createUser,db: Session = Depends(get_db)):
+    new_Post = models.Users(**user.model_dump())
+    db.add(new_Post)
+    db.commit()
+    db.refresh(new_Post)
+    return new_Post
+    
 
+@app.delete("/users/{id}",status_code=status.HTTP_202_ACCEPTED)
+def deleteUserById(id:int,db: Session = Depends(get_db)):
+    posts = db.query(models.Users).filter(models.Users.id == id)
+    post=posts.first()
+    if not post:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f"User with id of {id} not found")
+    
+    posts.delete(synchronize_session=False)
+    db.commit()
+    return {"message":f"The User with the id of {id} has been deleted"}

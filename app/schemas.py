@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from typing import Optional, Union
+from pydantic import BaseModel,EmailStr
+from typing import Optional, Union, List
 from datetime import datetime
 
 class PostBase(BaseModel):
@@ -16,6 +16,22 @@ class ResponseBody(BaseModel):
     title:str
     content:str
     created_at:datetime
+
+    class Config:
+        orm_mode = True
+
+class createUser(BaseModel):
+    email:EmailStr
+    password:str
+
+    class Config:
+        orm_mode = True
+
+
+class createUserResponseBody(BaseModel):
+    email:EmailStr
+    password:str
+
 
     class Config:
         orm_mode = True
