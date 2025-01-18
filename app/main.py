@@ -10,6 +10,7 @@ from psycopg2.extras import RealDictCursor
 import time
 from . import models
 from .schemas import Post as Post
+from . import schemas
 from .database import engine,SessionLocal, get_db
 from sqlalchemy.orm import Session
 
@@ -22,28 +23,28 @@ models.Base.metadata.create_all(bind=engine)
 
 
 
-@app.get("/posts")
+@app.get("/posts",response_model=schemas.ResponseBody)
 def firstapi(db: Session = Depends(get_db)):
     posts=db.query(models.Post).all()
-    return {"posts":posts}
+    return posts
 
 
-@app.post("/posts",status_code=status.HTTP_201_CREATED)
+@app.post("/posts",status_code=status.HTTP_201_CREATED,response_model=schemas.ResponseBody)
 def postBody(payload:Post,db: Session = Depends(get_db)):
     new_Post = models.Post(**payload.model_dump())
     db.add(new_Post)
     db.commit()
     db.refresh(new_Post)
-    return {"post":new_Post}
+    return new_Post
 
 
 
-@app.get("/posts/{id}")
+@app.get("/posts/{id}",response_model=schemas.ResponseBody)
 def getPostById(id:int,db: Session = Depends(get_db)):
     posts = db.query(models.Post).filter(models.Post.id == id).first()
     if not posts:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f"post with id of {id} not found")
-    return {"post": posts}
+    return posts
     
 
 @app.delete("/posts/{id}",status_code=status.HTTP_202_ACCEPTED)
