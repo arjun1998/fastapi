@@ -29,8 +29,10 @@ class createUser(BaseModel):
 
 
 class createUserResponseBody(BaseModel):
+    id:int
     email:EmailStr
-    password:str
+    created_at:datetime
+
 
 
     class Config:

@@ -1,5 +1,6 @@
 from typing import Optional, Union,List
 from fastapi import  FastAPI,Response,status,HTTPException,Depends
+from sqlalchemy.exc import IntegrityError
 from fastapi.params import Body
 from pydantic import BaseModel
 from random import randrange
@@ -76,10 +77,26 @@ def updatePostById(id:int,post:Post,db: Session = Depends(get_db)):
 @app.post("/users",status_code=status.HTTP_201_CREATED,response_model=schemas.createUserResponseBody)
 def createUsers(user:createUser,db: Session = Depends(get_db)):
     new_Post = models.Users(**user.model_dump())
-    db.add(new_Post)
-    db.commit()
-    db.refresh(new_Post)
-    return new_Post
+    try:
+        db.add(new_Post)
+        db.commit()
+        db.refresh(new_Post)
+        return new_Post
+    except IntegrityError as e:
+        db.rollback()
+        # Custom error message handling for duplicate keys
+        if 'duplicate key value violates unique constraint' in str(e.orig):
+            raise HTTPException(status_code=400, detail=f"User with email {user.email} already exists.")
+        raise HTTPException(status_code=400, detail="Failed to create user due to a constraint violation.")
+
+    except Exception as e:
+        db.rollback()
+        # General error handling
+        raise HTTPException(status_code=500, detail=str(e))
+    
+
+
+    
     
 
 @app.delete("/users/{id}",status_code=status.HTTP_202_ACCEPTED)
