@@ -12,9 +12,10 @@ import time
 from . import models
 from .schemas import Post,createUser
 from . import schemas
+from . import utils
 from .database import engine,SessionLocal, get_db
 from sqlalchemy.orm import Session
-from passlib.context import CryptContext
+
 
 
 
@@ -23,7 +24,7 @@ app = FastAPI()
 
 models.Base.metadata.create_all(bind=engine)
 
-pwd_context = CryptContext(schemes=["bcrypt"])
+
 
 @app.get("/posts",response_model=List[schemas.ResponseBody])
 def firstapi(db: Session = Depends(get_db)):
@@ -77,7 +78,7 @@ def updatePostById(id:int,post:Post,db: Session = Depends(get_db)):
 
 @app.post("/users",status_code=status.HTTP_201_CREATED,response_model=schemas.createUserResponseBody)
 def createUsers(user:createUser,db: Session = Depends(get_db)):
-    hashed_pwd=pwd_context.hash(user.password)
+    hashed_pwd=utils.hash(user.password)
     user.password=hashed_pwd
 
     new_Post = models.Users(**user.model_dump())
