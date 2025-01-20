@@ -114,3 +114,11 @@ def deleteUserById(id:int,db: Session = Depends(get_db)):
     posts.delete(synchronize_session=False)
     db.commit()
     return {"message":f"The User with the id of {id} has been deleted"}
+
+
+@app.get("/users/{id}",status_code=status.HTTP_200_OK,response_model=schemas.createUserResponseBody)
+def getUserByID(id:int,db: Session = Depends(get_db)):
+    user=db.query(models.Users).filter(models.Users.id==id).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f"User with the id {id} is not found")
+    return user
