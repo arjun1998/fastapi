@@ -11,6 +11,10 @@ class PostBase(BaseModel):
 class Post(PostBase):
     pass
 
+class userAuth(BaseModel):
+    email:EmailStr
+    password:str
+
 class ResponseBody(BaseModel):
     id:int
     title:str
@@ -37,3 +41,5 @@ class createUserResponseBody(BaseModel):
 
     class Config:
         orm_mode = True
+
+

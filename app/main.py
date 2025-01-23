@@ -15,7 +15,7 @@ from . import schemas
 from . import utils
 from .database import engine,SessionLocal, get_db
 from sqlalchemy.orm import Session
-from .routers import posts,users
+from .routers import posts,users,auth
 
 
 
@@ -26,6 +26,7 @@ models.Base.metadata.create_all(bind=engine)
 
 app.include_router(posts.router)
 app.include_router(users.router)
+app.include_router(auth.router)
 
 
 
