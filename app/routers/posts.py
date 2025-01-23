@@ -6,16 +6,17 @@ from ..database import engine,SessionLocal, get_db
 from sqlalchemy.orm import Session
 from typing import Optional, Union,List
 
-router=APIRouter()
+router=APIRouter(prefix="/posts",
+                 tags=['Posts'])
 
 
-@router.get("/posts",response_model=List[schemas.ResponseBody])
+@router.get("/",response_model=List[schemas.ResponseBody])
 def firstapi(db: Session = Depends(get_db)):
     posts=db.query(models.Post).all()
     return posts
 
 
-@router.post("/posts",status_code=status.HTTP_201_CREATED,response_model=schemas.ResponseBody)
+@router.post("/",status_code=status.HTTP_201_CREATED,response_model=schemas.ResponseBody)
 def postBody(payload:Post,db: Session = Depends(get_db)):
     new_Post = models.Post(**payload.model_dump())
     db.add(new_Post)
@@ -25,7 +26,7 @@ def postBody(payload:Post,db: Session = Depends(get_db)):
 
 
 
-@router.get("/posts/{id}",response_model=schemas.ResponseBody)
+@router.get("/{id}",response_model=schemas.ResponseBody)
 def getPostById(id:int,db: Session = Depends(get_db)):
     posts = db.query(models.Post).filter(models.Post.id == id).first()
     if not posts:
@@ -33,7 +34,7 @@ def getPostById(id:int,db: Session = Depends(get_db)):
     return posts
     
 
-@router.delete("/posts/{id}",status_code=status.HTTP_202_ACCEPTED)
+@router.delete("/{id}",status_code=status.HTTP_202_ACCEPTED)
 def deletePostById(id:int,db: Session = Depends(get_db)):
     posts = db.query(models.Post).filter(models.Post.id == id)
     post=posts.first()
@@ -46,7 +47,7 @@ def deletePostById(id:int,db: Session = Depends(get_db)):
 
 
 
-@router.put("/posts/{id}",status_code=status.HTTP_201_CREATED,response_model=schemas.ResponseBody)
+@router.put("/{id}",status_code=status.HTTP_201_CREATED,response_model=schemas.ResponseBody)
 def updatePostById(id:int,post:Post,db: Session = Depends(get_db)):
     
     post_query = db.query(models.Post).filter(models.Post.id == id)

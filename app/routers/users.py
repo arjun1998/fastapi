@@ -5,9 +5,9 @@ from sqlalchemy.exc import IntegrityError
 from ..database import engine,SessionLocal, get_db
 from sqlalchemy.orm import Session
 
-router=APIRouter()
+router=APIRouter(prefix="/users",tags=['Users'])
 
-@router.post("/users",status_code=status.HTTP_201_CREATED,response_model=schemas.createUserResponseBody)
+@router.post("/",status_code=status.HTTP_201_CREATED,response_model=schemas.createUserResponseBody)
 def createUsers(user:createUser,db: Session = Depends(get_db)):
     hashed_pwd=utils.hash(user.password)
     user.password=hashed_pwd
@@ -35,7 +35,7 @@ def createUsers(user:createUser,db: Session = Depends(get_db)):
     
     
 
-@router.delete("/users/{id}",status_code=status.HTTP_202_ACCEPTED)
+@router.delete("/{id}",status_code=status.HTTP_202_ACCEPTED)
 def deleteUserById(id:int,db: Session = Depends(get_db)):
     posts = db.query(models.Users).filter(models.Users.id == id)
     post=posts.first()
@@ -47,7 +47,7 @@ def deleteUserById(id:int,db: Session = Depends(get_db)):
     return {"message":f"The User with the id of {id} has been deleted"}
 
 
-@router.get("/users/{id}",status_code=status.HTTP_200_OK,response_model=schemas.createUserResponseBody)
+@router.get("/{id}",status_code=status.HTTP_200_OK,response_model=schemas.createUserResponseBody)
 def getUserByID(id:int,db: Session = Depends(get_db)):
     user=db.query(models.Users).filter(models.Users.id==id).first()
     if not user:
