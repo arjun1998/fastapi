@@ -19,6 +19,7 @@ def firstapi(db: Session = Depends(get_db), user_id:int = Depends(oath2.get_curr
 @router.post("/",status_code=status.HTTP_201_CREATED,response_model=schemas.ResponseBody)
 def postBody(payload:Post,db: Session = Depends(get_db), user_id:int = Depends(oath2.get_current_user)):
     new_Post = models.Post(**payload.model_dump())
+    print(user_id.email)
     db.add(new_Post)
     db.commit()
     db.refresh(new_Post)
