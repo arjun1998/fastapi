@@ -7,7 +7,7 @@ from .. import oath2
 
 router=APIRouter(tags=['Authentication'])
 
-@router.post('/login')
+@router.post('/login',response_model=schemas.token)
 def login(usercred:OAuth2PasswordRequestForm=Depends(),db:Session=Depends(get_db)):
     user=db.query(models.Users).filter(models.Users.email==usercred.username).first()
     if not user:

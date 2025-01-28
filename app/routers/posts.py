@@ -11,7 +11,7 @@ router=APIRouter(prefix="/posts",
 
 
 @router.get("/",response_model=List[schemas.ResponseBody])
-def firstapi(db: Session = Depends(get_db)):
+def firstapi(db: Session = Depends(get_db), user_id:int = Depends(oath2.get_current_user)):
     posts=db.query(models.Post).all()
     return posts
 
@@ -27,7 +27,7 @@ def postBody(payload:Post,db: Session = Depends(get_db), user_id:int = Depends(o
 
 
 @router.get("/{id}",response_model=schemas.ResponseBody)
-def getPostById(id:int,db: Session = Depends(get_db)):
+def getPostById(id:int,db: Session = Depends(get_db), user_id:int = Depends(oath2.get_current_user)):
     posts = db.query(models.Post).filter(models.Post.id == id).first()
     if not posts:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f"post with id of {id} not found")
@@ -35,7 +35,7 @@ def getPostById(id:int,db: Session = Depends(get_db)):
     
 
 @router.delete("/{id}",status_code=status.HTTP_202_ACCEPTED)
-def deletePostById(id:int,db: Session = Depends(get_db)):
+def deletePostById(id:int,db: Session = Depends(get_db), user_id:int = Depends(oath2.get_current_user)):
     posts = db.query(models.Post).filter(models.Post.id == id)
     post=posts.first()
     if not post:
@@ -48,7 +48,7 @@ def deletePostById(id:int,db: Session = Depends(get_db)):
 
 
 @router.put("/{id}",status_code=status.HTTP_201_CREATED,response_model=schemas.ResponseBody)
-def updatePostById(id:int,post:Post,db: Session = Depends(get_db)):
+def updatePostById(id:int,post:Post,db: Session = Depends(get_db), user_id:int = Depends(oath2.get_current_user)):
     
     post_query = db.query(models.Post).filter(models.Post.id == id)
     posts = post_query.first()
