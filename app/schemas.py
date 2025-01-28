@@ -43,3 +43,9 @@ class createUserResponseBody(BaseModel):
         orm_mode = True
 
 
+class token(BaseModel):
+    access_token:str
+    token_type:str
+
+class tokenData(BaseModel):
+    id:Optional[str]=None

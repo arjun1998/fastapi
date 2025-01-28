@@ -1,5 +1,5 @@
 from fastapi import  FastAPI,Response,status,HTTPException,Depends,APIRouter
-from .. import models,schemas,utils
+from .. import models,schemas,utils,oath2
 from ..schemas import Post,createUser
 from sqlalchemy.exc import IntegrityError
 from ..database import engine,SessionLocal, get_db
@@ -17,7 +17,7 @@ def firstapi(db: Session = Depends(get_db)):
 
 
 @router.post("/",status_code=status.HTTP_201_CREATED,response_model=schemas.ResponseBody)
-def postBody(payload:Post,db: Session = Depends(get_db)):
+def postBody(payload:Post,db: Session = Depends(get_db), user_id:int = Depends(oath2.get_current_user)):
     new_Post = models.Post(**payload.model_dump())
     db.add(new_Post)
     db.commit()
