@@ -20,6 +20,7 @@ class ResponseBody(BaseModel):
     title:str
     content:str
     created_at:datetime
+    Owner_id:int
 
     class Config:
         orm_mode = True
