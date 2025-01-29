@@ -41,7 +41,8 @@ def deletePostById(id:int,db: Session = Depends(get_db), user_id:int = Depends(o
     post=posts.first()
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f"post with id of {id} not found")
-    
+    if post.Owner_id!=user_id.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail=f"id of {id} not authorised to perform requested action")
     posts.delete(synchronize_session=False)
     db.commit()
     return {"message":f"The Post with the id of {id} has been deleted"}
