@@ -12,7 +12,7 @@ router=APIRouter(prefix="/posts",
 
 @router.get("/",response_model=List[schemas.ResponseBody])
 def firstapi(db: Session = Depends(get_db), user_id:int = Depends(oath2.get_current_user)):
-    posts=db.query(models.Post).all()
+    posts=db.query(models.Post).filter(models.Post.id==user_id.id).all()
     return posts
 
 
@@ -56,6 +56,8 @@ def updatePostById(id:int,post:Post,db: Session = Depends(get_db), user_id:int =
     posts = post_query.first()
     if not posts:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f"post with id of {id} not found")
+    if posts.Owner_id!=user_id.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail=f"id of {id} not authorised to perform requested action")
     post_query.update(post.model_dump(),synchronize_session=False)
     db.commit()
     return  {"message":"The following posts have been updated",
