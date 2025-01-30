@@ -15,12 +15,23 @@ class userAuth(BaseModel):
     email:EmailStr
     password:str
 
+class createUserResponseBody(BaseModel):
+    id:int
+    email:EmailStr
+    created_at:datetime
+
+
+
+    class Config:
+        orm_mode = True
+
 class ResponseBody(BaseModel):
     id:int
     title:str
     content:str
     created_at:datetime
     Owner_id:int
+    Owner:createUserResponseBody
 
     class Config:
         orm_mode = True
@@ -33,15 +44,7 @@ class createUser(BaseModel):
         orm_mode = True
 
 
-class createUserResponseBody(BaseModel):
-    id:int
-    email:EmailStr
-    created_at:datetime
 
-
-
-    class Config:
-        orm_mode = True
 
 
 class token(BaseModel):
