@@ -11,8 +11,8 @@ router=APIRouter(prefix="/posts",
 
 
 @router.get("/",response_model=List[schemas.ResponseBody])
-def firstapi(db: Session = Depends(get_db), user_id:int = Depends(oath2.get_current_user)):
-    posts=db.query(models.Post).filter(models.Post.Owner_id==user_id.id).all()
+def firstapi(db: Session = Depends(get_db), user_id:int = Depends(oath2.get_current_user),limit:int=10):
+    posts=db.query(models.Post).filter(models.Post.Owner_id==user_id.id).limit(limit).all()
     return posts
 
 
