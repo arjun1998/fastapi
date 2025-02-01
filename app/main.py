@@ -1,23 +1,8 @@
-from typing import Optional, Union,List
-from fastapi import  FastAPI,Response,status,HTTPException,Depends
-from sqlalchemy.exc import IntegrityError
-from fastapi.params import Body
-from pydantic import BaseModel
-from random import randrange
-import psycopg2
-import os
-from dotenv import load_dotenv
-from psycopg2.extras import RealDictCursor
-import time
+from fastapi import  FastAPI
 from . import models
-from .schemas import Post,createUser
-from . import schemas
-from . import utils
-from .database import engine,SessionLocal, get_db
-from sqlalchemy.orm import Session
+from .database import engine
 from .routers import posts,users,auth
-
-
+from .config import setting
 
 
 app = FastAPI()
